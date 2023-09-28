@@ -212,46 +212,30 @@ void VkCompositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBound
 	    0, nullptr,
 	    1, &barrier);
 
-	VkImageCopy region = {};
-	region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.srcSubresource.mipLevel = 0;
-	region.srcSubresource.baseArrayLayer = 0;
-	region.srcSubresource.layerCount = 1;
-	region.srcOffset = { 0, 0, 0 };
-	region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.dstSubresource.mipLevel = 0;
-	region.dstSubresource.baseArrayLayer = 0;
-	region.dstSubresource.layerCount = 1;
-	region.dstOffset = { 0, 0, 0 };
-	region.extent = { tex->m_nWidth, tex->m_nHeight, 1 };
-
-	bool image_is_multisampled = xr_main_view(XruEyeLeft).maxSwapchainSampleCount < tex->m_nSampleCount;
-
-	if (image_is_multisampled) {
-		// HACK: As of July 2022 Monado does not support multisampling, so we can't just copy the image.
-		// Instead, we do vkCmdResolveImage into the swapchain image. (note, this doesn't support depth textures)
-		// Todo - how do we tell which runtimes support multisampling?
-
-		vkCmdResolveImage( //
-		    currentCommandBuffer, // commandbuffer
-		    (VkImage)tex->m_nImage, // srcImage
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-		    swapchainImages.at(currentIndex).image, // dstImage
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-		    1, // regionCount
-		    (VkImageResolve*)&region // pRegions
-		);
-	} else {
-		vkCmdCopyImage( //
-		    currentCommandBuffer, // commandbuffer
-		    (VkImage)tex->m_nImage, // srcImage
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
-		    swapchainImages.at(currentIndex).image, // dstImage
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
-		    1, // regionCount
-		    &region // pRegions
-		);
-	}
+	VkImageBlit blitRegion = {};
+	blitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blitRegion.srcSubresource.mipLevel = 0;
+	blitRegion.srcSubresource.baseArrayLayer = 0;
+	blitRegion.srcSubresource.layerCount = 1;
+	
+	blitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blitRegion.dstSubresource.mipLevel = 0;
+	blitRegion.dstSubresource.baseArrayLayer = 0;
+	blitRegion.dstSubresource.layerCount = 1;
+	
+	blitRegion.srcOffsets[0] = { 0, 0, 0 };          // Start from the top of the source image
+	blitRegion.srcOffsets[1] = { (int32_t)tex->m_nWidth, (int32_t)tex->m_nHeight, 1 }; // End at the bottom of the source image
+	
+	blitRegion.dstOffsets[0] = { 0, (int32_t)tex->m_nHeight, 0 };     // Start from the bottom of the destination image
+	blitRegion.dstOffsets[1] = { (int32_t)tex->m_nWidth, 0, 1 };      // End at the top of the destination image
+	
+	vkCmdBlitImage(
+		currentCommandBuffer,
+		(VkImage)tex->m_nImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		swapchainImages.at(currentIndex).image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1, &blitRegion,
+		VK_FILTER_LINEAR  // or VK_FILTER_LINEAR, depending on your needs
+	);
 
 	// transition swapchain image back to COLOR_ATTACHMENT_OPTIMAL for runtime
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

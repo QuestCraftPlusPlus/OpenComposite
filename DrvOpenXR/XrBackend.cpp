@@ -231,9 +231,11 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			break;
 		}
 		case vr::TextureType_Vulkan: {
-			const vr::VRVulkanTextureData_t* vktex = (vr::VRVulkanTextureData_t*)tex->handle;
+			vr::VRVulkanTextureData_t* vktex = (vr::VRVulkanTextureData_t*)tex->handle;
 
 			VkPhysicalDevice xr_desire;
+			
+			OOVR_LOGF("Instance: %lu.", vktex->m_pInstance);
 			// Regardless of error checking, we have to call this or we get crazy validation errors.
 			xr_ext->xrGetVulkanGraphicsDeviceKHR(xr_instance, xr_system, vktex->m_pInstance, &xr_desire);
 

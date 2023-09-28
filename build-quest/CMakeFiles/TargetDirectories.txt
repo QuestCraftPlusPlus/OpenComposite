@@ -1,0 +1,6 @@
+D:/OpenOVRPico/build-quest/CMakeFiles/OpenXR.dir
+D:/OpenOVRPico/build-quest/CMakeFiles/DrvOpenXR.dir
+D:/OpenOVRPico/build-quest/CMakeFiles/OCCore.dir
+D:/OpenOVRPico/build-quest/CMakeFiles/OCOVR.dir
+D:/OpenOVRPico/build-quest/CMakeFiles/edit_cache.dir
+D:/OpenOVRPico/build-quest/CMakeFiles/rebuild_cache.dir

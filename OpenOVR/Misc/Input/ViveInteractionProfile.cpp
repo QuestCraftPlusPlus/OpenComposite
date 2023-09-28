@@ -31,16 +31,13 @@ ViveWandInteractionProfile::ViveWandInteractionProfile()
 		{ "pull", "value" }
 	};
 
-	hmdPropertiesMap = {
-		{ vr::Prop_ManufacturerName_String, "HTC" },
-		{ vr::Prop_ModelNumber_String, "Vive. MV" },
-		{ vr::Prop_ControllerType_String, "vive" },
-	};
+	hmdPropertiesMap.insert({ vr::Prop_ManufacturerName_String, "HTC" });
+	hmdPropertiesMap.insert({ vr::Prop_ModelNumber_String, "Vive. MV" });
+	hmdPropertiesMap.insert({ vr::Prop_ControllerType_String, "vive" });
 
-	propertiesMap = {
-		{ vr::Prop_ModelNumber_String, { "Vive. Controller MV" } },
-		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
-	};
+	propertiesMap.insert(
+		{ vr::Prop_ModelNumber_String, { "Vive. Controller MV" } });
+	propertiesMap.insert({ vr::Prop_ControllerType_String, { GetOpenVRName().value() } });
 
 	/*
 	* Both transforms use values from the same file:

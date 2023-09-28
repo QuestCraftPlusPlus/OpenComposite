@@ -34,14 +34,11 @@ HolographicInteractionProfile::HolographicInteractionProfile()
 		{ "joystick", "thumbstick" }
 	};
 
-	hmdPropertiesMap = {
-		{ vr::Prop_ManufacturerName_String, "WindowsMR" },
-	};
+	hmdPropertiesMap.insert(
+		{ vr::Prop_ManufacturerName_String, "WindowsMR" });
 
-	propertiesMap = {
-		{ vr::Prop_ModelNumber_String, { "WindowsMR" } },
-		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } },
-	};
+	propertiesMap.insert({ vr::Prop_ModelNumber_String, { "WindowsMR" } });
+	propertiesMap.insert({ vr::Prop_ControllerType_String, { GetOpenVRName().value() } });
 }
 
 const std::string& HolographicInteractionProfile::GetPath() const

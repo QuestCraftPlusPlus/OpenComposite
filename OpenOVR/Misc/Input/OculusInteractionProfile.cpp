@@ -63,14 +63,12 @@ OculusTouchInteractionProfile::OculusTouchInteractionProfile()
 	// pose/handgrip
 	// pose/tip
 
-	hmdPropertiesMap = {
-		{ vr::Prop_ManufacturerName_String, "Oculus" },
-	};
+	hmdPropertiesMap.insert(
+		{ vr::Prop_ManufacturerName_String, "Oculus" });
 
-	propertiesMap = {
-		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } },
-		{ vr::Prop_ControllerType_String, { GetOpenVRName().value() } }
-	};
+	propertiesMap.insert(
+		{ vr::Prop_ModelNumber_String, { "Oculus Quest2 (Left Controller)", "Oculus Quest2 (Right Controller)" } });
+	propertiesMap.insert({ vr::Prop_ControllerType_String, { GetOpenVRName().value() } });
 
 	// Setup the grip-to-steamvr space matrices
 
