@@ -30,6 +30,7 @@ public:
 	 * we call xrEndSession.
 	 */
 	bool sessionActive = false;
+	bool hasPerfExt = false;
 
 	/**
 	 * To be called after xrCreateSession. Should only be used by DrvOpenXR.

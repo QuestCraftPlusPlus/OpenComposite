@@ -2,5 +2,5 @@
 
 #pragma clang system_header
 #ifdef __cplusplus
-#include "D:/OpenOVRPico/OpenOVR/stdafx.h"
+#include "D:/OpenOVR/OpenOVR/stdafx.h"
 #endif // __cplusplus

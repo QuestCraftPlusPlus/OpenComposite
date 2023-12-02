@@ -487,7 +487,17 @@ void XrBackend::SubmitFrames(bool showSkybox, bool postPresent)
 
 	// Apps can use layers to provide GUIs and loading screens where a 3D environment is not being rendered.
 	// Only create the projection layer if we have a 3D environment to submit.
-	XrCompositionLayerProjection mainLayer{ XR_TYPE_COMPOSITION_LAYER_PROJECTION };
+	// Flip time
+	XrCompositionLayerImageLayoutFB imageFlip{
+		XR_TYPE_COMPOSITION_LAYER_IMAGE_LAYOUT_FB,
+		nullptr,
+		XR_COMPOSITION_LAYER_IMAGE_LAYOUT_VERTICAL_FLIP_BIT_FB 
+	};
+	
+	XrCompositionLayerProjection mainLayer{ 
+	`	XR_TYPE_COMPOSITION_LAYER_PROJECTION;
+		&imageFlip;
+	};
 	if (submittedEyeTextures) {
 		// We have eye textures so setup a projection layer
 		mainLayer.space = xr_space_from_ref_space_type(GetUnsafeBaseSystem()->currentSpace);

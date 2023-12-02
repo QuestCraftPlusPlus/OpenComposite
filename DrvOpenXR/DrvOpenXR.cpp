@@ -127,6 +127,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	std::vector<const char*> extensions;
 	XrGraphicsApiSupportedFlags apiFlags = 0;
 
+	bool hasPerfExt = false;
 #if defined(SUPPORT_DX) && defined(SUPPORT_DX11)
 	if (availableExtensions.count("XR_KHR_D3D11_enable")) {
 		extensions.push_back("XR_KHR_D3D11_enable");
@@ -161,6 +162,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	if (availableExtensions.count(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME))
 		extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
 #endif
+	if(availableExtensions.count(XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME))
+		hasPerfExt = true;
+		extensions.push_back(XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME);
 	if (availableExtensions.count(XR_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		extensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
@@ -247,6 +251,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 
 	// Build a backend that works with OpenXR
 	currentBackend = new XrBackend(useVulkanTmpGfx, useD3D11TmpGfx);
+	currentBackend->hasPerfExt = hasPerfExt;
 
 	// Setup our OpenXR session
 	SetupSession();
@@ -268,6 +273,13 @@ void DrvOpenXR::SetupSession()
 	sessionInfo.systemId = xr_system;
 	sessionInfo.next = currentBackend->GetCurrentGraphicsBinding();
 	OOVR_FAILED_XR_ABORT(xrCreateSession(xr_instance, &sessionInfo, &xr_session.get()));
+	
+	if(currentBackend->hasPerfExt) {
+		PFN_xrPerfSettingsSetPerformanceLevelEXT xrPerfSettingsSetPerformanceLevelEXT_p;
+		xrGetInstanceProcAddr(xr_instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&xrPerfSettingsSetPerformanceLevelEXT_p));
+		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_CPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT);
+		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_GPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT);
+	}
 
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
 	xr_gbl = new XrSessionGlobals();
