@@ -1,6 +1,0 @@
-D:/OpenOVR/build-quest-release/CMakeFiles/OpenXR.dir
-D:/OpenOVR/build-quest-release/CMakeFiles/DrvOpenXR.dir
-D:/OpenOVR/build-quest-release/CMakeFiles/OCCore.dir
-D:/OpenOVR/build-quest-release/CMakeFiles/OCOVR.dir
-D:/OpenOVR/build-quest-release/CMakeFiles/edit_cache.dir
-D:/OpenOVR/build-quest-release/CMakeFiles/rebuild_cache.dir
