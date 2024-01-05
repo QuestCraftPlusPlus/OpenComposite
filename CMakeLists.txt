@@ -19,7 +19,7 @@ option(USE_SYSTEM_OPENXR "Try using system installation of OpenXR if available" 
 option(USE_SYSTEM_GLM "Try using system installation of glm if available" OFF)
 
 # Directory for generated files, those being split headers and stubs
-set(GENERATED_DIR ${CMAKE_BINARY_DIR}/generated)
+set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # Platform-dependent flags
 # Support Vulkan on Linux instead of DirectX
@@ -65,7 +65,7 @@ include_external_msproject(
 
 # === OpenVR Headers ===
 add_library(OpenVR INTERFACE)
-target_include_directories(OpenVR INTERFACE OpenVRHeaders) # TODO make this private and put the public headers elsewhere
+target_include_directories(OpenVR INTERFACE ${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders) # TODO make this private and put the public headers elsewhere
 
 # === Vulkan ===
 add_library(Vulkan INTERFACE)
@@ -74,9 +74,9 @@ if (WIN32)
 	# On Windows, use the bundled copy
 	target_include_directories(Vulkan INTERFACE libs/vulkan/Include) # TODO make this private and put the public headers elsewhere
 	if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib/vulkan-1.lib)
+		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_LIST_DIR}/libs/vulkan/Lib/vulkan-1.lib)
 	else ()
-		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
+		target_link_libraries(Vulkan INTERFACE ${CMAKE_CURRENT_LIST_DIR}/libs/vulkan/Lib32/vulkan-1.lib)
 	endif ()
 
 	target_compile_definitions(Vulkan INTERFACE -DVK_USE_PLATFORM_WIN32_KHR)
@@ -107,12 +107,12 @@ endif()
 
 if (NOT OpenXR_FOUND)
 	# Building CMake subprojects is a real pain (IMO), so just build this here
-	set(XrDir libs/openxr-sdk)
-	set(XrDirLoader libs/openxr-sdk/src/loader)
-	set(XrDirCommon libs/openxr-sdk/src/common)
+	set(XrDir ${CMAKE_CURRENT_LIST_DIR}/libs/openxr-sdk)
+	set(XrDirLoader ${CMAKE_CURRENT_LIST_DIR}/libs/openxr-sdk/src/loader)
+	set(XrDirCommon ${CMAKE_CURRENT_LIST_DIR}/libs/openxr-sdk/src/common)
 	if (ANDROID)
 		# Whatever consumes this library must then link to an OpenXR loader, such as the Oculus one
-		add_library(OpenXR STATIC scripts/empty.c) # Doesn't do anything
+		add_library(OpenXR STATIC ${CMAKE_CURRENT_LIST_DIR}/scripts/empty.c) # Doesn't do anything
 	else ()
 	add_library(OpenXR STATIC
 		${XrDirLoader}/api_layer_interface.cpp
@@ -174,43 +174,38 @@ endif()
 
 if (NOT glm_FOUND)
 	add_library(glm INTERFACE)
-	target_include_directories(glm INTERFACE libs/glm) # No separate include directory :(
+	target_include_directories(glm INTERFACE ${CMAKE_CURRENT_LIST_DIR}/libs/glm) # No separate include directory :(
 	set(glmLib glm)
 endif()
 
 # === DrvOpenXR ===
 add_library(DrvOpenXR STATIC
-	DrvOpenXR/DrvOpenXR.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/DrvOpenXR.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrDriverPrivate.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrBackend.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrBackend.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrTrackedDevice.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrTrackedDevice.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrHMD.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrHMD.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrController.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/XrController.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryGraphics.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryGraphics.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryD3D11.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryD3D11.h
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryVk.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/tmp_gfx/TemporaryVk.h
 
-	DrvOpenXR/XrDriverPrivate.h
-
-	DrvOpenXR/XrBackend.cpp
-	DrvOpenXR/XrBackend.h
-
-	DrvOpenXR/XrTrackedDevice.cpp
-	DrvOpenXR/XrTrackedDevice.h
-
-	DrvOpenXR/XrHMD.cpp
-	DrvOpenXR/XrHMD.h
-
-	DrvOpenXR/XrController.cpp
-	DrvOpenXR/XrController.h
-
-	DrvOpenXR/tmp_gfx/TemporaryGraphics.cpp
-	DrvOpenXR/tmp_gfx/TemporaryGraphics.h
-	DrvOpenXR/tmp_gfx/TemporaryD3D11.cpp
-	DrvOpenXR/tmp_gfx/TemporaryD3D11.h
-	DrvOpenXR/tmp_gfx/TemporaryVk.cpp
-	DrvOpenXR/tmp_gfx/TemporaryVk.h
 	# Ensuring vrtypes.h exists should mean the rest of our generated interfaces exists
 	${GENERATED_DIR}/interfaces/vrtypes.h
 	${GENERATED_DIR}/static_bases.gen.h
 )
-target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub ${CMAKE_BINARY_DIR})
-target_include_directories(DrvOpenXR PRIVATE DrvOpenXR OpenOVR)
+target_include_directories(DrvOpenXR PUBLIC ${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/pub ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(DrvOpenXR PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR ${CMAKE_CURRENT_LIST_DIR}/OpenOVR)
 target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${glmLib})
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS} -D_CRT_SECURE_NO_WARNINGS)
-source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
+source_group(Public REGULAR_EXPRESSION ${CMAKE_CURRENT_LIST_DIR}/DrvOpenXR/pub/*)
 
 if (NOT (XR_VALIDATION_LAYER_PATH STREQUAL ""))
 	target_compile_definitions(DrvOpenXR PRIVATE -DXR_VALIDATION_LAYER_PATH=\"${XR_VALIDATION_LAYER_PATH}\")
@@ -227,152 +222,153 @@ if (WIN32)
 	)
 else ()
 	enable_language(ASM)
-	set_property(SOURCE OpenOVR/Misc/resources_linux.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
-	set_property(SOURCE OpenOVR/Misc/resources_linux.s SET PROPERTY INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}")
+	set_property(SOURCE ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/resources_linux.s APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+	set_property(SOURCE ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/resources_linux.s SET PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}")
 	set(OVR_RESOURCES
-		OpenOVR/Misc/resources_linux.s
+			${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/resources_linux.s
 	)
 endif ()
 set(OVR_PCH_EXCLUDED
-	OpenOVR/Misc/ini.c
-	OpenOVR/Misc/jsoncpp.cpp
-	OpenOVR/Misc/lodepng.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/ini.c
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/jsoncpp.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/lodepng.cpp
 )
 
 add_library(OCCore STATIC
 	# This file is used to generate the precompiled headers
-	OpenOVR/stdafx.cpp
+		${CMAKE_CURRENT_LIST_DIR}/OpenOVR/stdafx.cpp
 
-	OpenOVR/Compositor/compositor.cpp
-	OpenOVR/Compositor/dx11compositor.cpp
-	OpenOVR/Compositor/dx10compositor.cpp
-	OpenOVR/Compositor/dx12compositor.cpp
-	OpenOVR/Compositor/glcompositor.cpp
-	OpenOVR/Compositor/glescompositor.cpp
-	OpenOVR/Compositor/vkcompositor.cpp
-	OpenOVR/convert.cpp
-	OpenOVR/logging.cpp
-	OpenOVR/linux_funcs.cpp
-	OpenOVR/Misc/Config.cpp
-	OpenOVR/Misc/debug_helper.cpp
-	OpenOVR/Misc/Haptics.cpp
-	OpenOVR/Misc/xrutil.cpp
-	OpenOVR/Misc/xrmoreutils.cpp
-	OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
-	OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
-	OpenOVR/Misc/Keyboard/VRKeyboard.cpp
-	OpenOVR/Misc/Input/InteractionProfile.cpp
-	OpenOVR/Misc/Input/OculusInteractionProfile.cpp
-	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
-	OpenOVR/Misc/Input/ViveInteractionProfile.cpp
-	OpenOVR/Misc/Input/IndexControllerInteractionProfile.cpp
-	OpenOVR/Misc/Input/HolographicInteractionProfile.cpp
-	OpenOVR/Misc/Input/ReverbG2InteractionProfile.cpp
-	OpenOVR/OpenOVR.cpp
-	OpenOVR/Reimpl/BaseApplications.cpp
-	OpenOVR/Reimpl/BaseChaperone.cpp
-	OpenOVR/Reimpl/BaseChaperoneSetup.cpp
-	OpenOVR/Reimpl/BaseClientCore.cpp
-	OpenOVR/Reimpl/BaseCompositor.cpp
-	OpenOVR/Reimpl/BaseExtendedDisplay.cpp
-	OpenOVR/Reimpl/BaseInput.cpp
-	OpenOVR/Reimpl/BaseInput_Hand.cpp
-	OpenOVR/Reimpl/BaseInputInternal.cpp
-	OpenOVR/Reimpl/BaseOverlay.cpp
-	OpenOVR/Reimpl/BaseOverlayView.cpp
-	OpenOVR/Reimpl/BaseRenderModels.cpp
-	OpenOVR/Reimpl/BaseScreenshots.cpp
-	OpenOVR/Reimpl/BaseSettings.cpp
-	OpenOVR/Reimpl/BaseSystem.cpp
-	OpenOVR/Reimpl/BaseMailbox.cpp
-	OpenOVR/Reimpl/BaseControlPanel.cpp
-	OpenOVR/Reimpl/CVRApplications.cpp
-	OpenOVR/Reimpl/CVRChaperone.cpp
-	OpenOVR/Reimpl/CVRChaperoneSetup.cpp
-	OpenOVR/Reimpl/CVRClientCore.cpp
-	OpenOVR/Reimpl/CVRCompositor.cpp
-	OpenOVR/Reimpl/CVRExtendedDisplay.cpp
-	OpenOVR/Reimpl/CVRInput.cpp
-	OpenOVR/Reimpl/CVRInputInternal.cpp
-	OpenOVR/Reimpl/CVROverlay.cpp
-	OpenOVR/Reimpl/CVROverlayView.cpp
-	OpenOVR/Reimpl/CVRRenderModels.cpp
-	OpenOVR/Reimpl/CVRScreenshots.cpp
-	OpenOVR/Reimpl/CVRSettings.cpp
-	OpenOVR/Reimpl/CVRSystem.cpp
-	OpenOVR/Reimpl/CVRMailbox.cpp
-	OpenOVR/Reimpl/CVRControlPanel.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/compositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/dx11compositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/dx10compositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/dx12compositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/glcompositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/glescompositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/vkcompositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/convert.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/logging.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/linux_funcs.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Config.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/debug_helper.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Haptics.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/xrutil.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/xrmoreutils.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/KeyboardLayout.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/SudoFontMeta.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/VRKeyboard.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/InteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/OculusInteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/KhrSimpleInteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/ViveInteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/IndexControllerInteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/HolographicInteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/ReverbG2InteractionProfile.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/OpenOVR.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseApplications.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseChaperone.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseChaperoneSetup.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseClientCore.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseCompositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseExtendedDisplay.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseInput.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseInput_Hand.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseInputInternal.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseOverlay.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseOverlayView.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseRenderModels.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseScreenshots.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseSettings.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseSystem.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseMailbox.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseControlPanel.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRApplications.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRChaperone.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRChaperoneSetup.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRClientCore.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRCompositor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRExtendedDisplay.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRInput.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRInputInternal.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVROverlay.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVROverlayView.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRRenderModels.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRScreenshots.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRSettings.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRSystem.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRMailbox.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRControlPanel.cpp
 	${GENERATED_DIR}/stubs.gen.cpp
 
 	# Base classes
-	OpenOVR/Reimpl/BaseServerDriverHost.cpp OpenOVR/Reimpl/BaseServerDriverHost.h
+		${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseServerDriverHost.cpp
+		${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseServerDriverHost.h
 
 	# Definitions
-	OpenOVR/Reimpl/CVRServerDriverHost.cpp
+		${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVRServerDriverHost.cpp
 
 	# Exclude from the PCH requirement
 	${OVR_PCH_EXCLUDED}
 
 	# Headers
-	OpenOVR/BaseCommon.h
-	OpenOVR/Compositor/compositor.h
-	OpenOVR/convert.h
-	OpenOVR/custom_types.h
-	OpenOVR/logging.h
-	OpenOVR/Misc/Config.h
-	OpenOVR/Misc/debug_helper.h
-	OpenOVR/Misc/Haptics.h
-	OpenOVR/Misc/ini.h
-	OpenOVR/Misc/json/json-forwards.h
-	OpenOVR/Misc/json/json.h
-	OpenOVR/Misc/Keyboard/KeyboardLayout.h
-	OpenOVR/Misc/Keyboard/SudoFontMeta.h
-	OpenOVR/Misc/Keyboard/VRKeyboard.h
-	OpenOVR/Misc/Input/InteractionProfile.h
-	OpenOVR/Misc/Input/OculusInteractionProfile.h
-	OpenOVR/Misc/Input/KhrSimpleInteractionProfile.h
-	OpenOVR/Misc/lodepng.h
-	OpenOVR/Misc/ScopeGuard.h
-	OpenOVR/Reimpl/BaseApplications.h
-	OpenOVR/Reimpl/BaseChaperone.h
-	OpenOVR/Reimpl/BaseChaperoneSetup.h
-	OpenOVR/Reimpl/BaseClientCore.h
-	OpenOVR/Reimpl/BaseCompositor.h
-	OpenOVR/Reimpl/BaseExtendedDisplay.h
-	OpenOVR/Reimpl/BaseInput.h
-	OpenOVR/Reimpl/BaseInputInternal.cpp
-	OpenOVR/Reimpl/BaseOverlay.h
-	OpenOVR/Reimpl/BaseOverlayView.h
-	OpenOVR/Reimpl/BaseRenderModels.h
-	OpenOVR/Reimpl/BaseScreenshots.h
-	OpenOVR/Reimpl/BaseSettings.h
-	OpenOVR/Reimpl/BaseSystem.h
-	OpenOVR/Reimpl/BaseMailbox.h
-	OpenOVR/Reimpl/BaseControlPanel.h
-	OpenOVR/Reimpl/Interfaces.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/BaseCommon.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Compositor/compositor.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/convert.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/custom_types.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/logging.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Config.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/debug_helper.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Haptics.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/ini.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/json/json-forwards.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/json/json.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/KeyboardLayout.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/SudoFontMeta.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Keyboard/VRKeyboard.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/InteractionProfile.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/OculusInteractionProfile.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/Input/KhrSimpleInteractionProfile.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/lodepng.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Misc/ScopeGuard.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseApplications.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseChaperone.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseChaperoneSetup.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseClientCore.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseCompositor.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseExtendedDisplay.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseInput.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseInputInternal.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseOverlay.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseOverlayView.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseRenderModels.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseScreenshots.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseSettings.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseSystem.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseMailbox.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/BaseControlPanel.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/Interfaces.h
 	${GENERATED_DIR}/static_bases.gen.h
-	OpenOVR/resources.h
-	OpenOVR/stdafx.h
-	OpenOVR/steamvr_abi.h
-	OpenOVR/targetver.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/resources.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/stdafx.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/steamvr_abi.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/targetver.h
 
 	# Newly-added classes
-	OpenOVR/Drivers/DriverManager.cpp
-	OpenOVR/Drivers/DriverManager.h
-	OpenOVR/Drivers/Backend.cpp
-	OpenOVR/Drivers/Backend.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Drivers/DriverManager.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Drivers/DriverManager.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Drivers/Backend.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Drivers/Backend.h
 
 	# While not actually part of OCCore, list all the OpenVR interfaces here so they are easily accessable in IDE
-	OpenVRHeaders/custom_interfaces/IVRClientCore_002.h
-	OpenVRHeaders/custom_interfaces/IVRClientCore_003.h
-	OpenVRHeaders/custom_interfaces/IVRCompositor_017.h
-	OpenVRHeaders/custom_interfaces/IVRMailbox_001.h
-	OpenVRHeaders/custom_interfaces/IVRInputInternal_002.h
-	OpenVRHeaders/custom_interfaces/IVRControlPanel_006.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRClientCore_002.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRClientCore_003.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRCompositor_017.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRMailbox_001.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRInputInternal_002.h
+	${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/IVRControlPanel_006.h
 	# Ensuring vrtypes.h exists should mean the rest of our generated interfaces exists
 	${GENERATED_DIR}/interfaces/vrtypes.h
 )
-target_include_directories(OCCore PUBLIC OpenOVR ${CMAKE_BINARY_DIR})  # TODO make this private and put the public headers elsewhere
+target_include_directories(OCCore PUBLIC ${CMAKE_CURRENT_LIST_DIR}/OpenOVR ${CMAKE_CURRENT_BINARY_DIR})  # TODO make this private and put the public headers elsewhere
 target_include_directories(OCCore PRIVATE BundledLibs OpenVRHeaders)
 target_compile_definitions(OCCore PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 
@@ -384,14 +380,14 @@ if (NOT WIN32 AND NOT ANDROID)
 endif ()
 
 # Set up precompiled headers for OCCore
-target_precompile_headers(OCCore PRIVATE ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h)
+target_precompile_headers(OCCore PRIVATE ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/stdafx.h)
 set_source_files_properties(${OVR_PCH_EXCLUDED} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 source_group(OpenVR REGULAR_EXPRESSION ${GENERATED_DIR}/interfaces)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION ${GENERATED_DIR}/interfaces/driver_*)
-source_group(OpenVR\\Custom REGULAR_EXPRESSION OpenVRHeaders/custom_interfaces/*)
-source_group(Interfaces REGULAR_EXPRESSION OpenOVR/Reimpl/Base*)
-source_group(Interfaces\\Declarations REGULAR_EXPRESSION OpenOVR/Reimpl/CVR*)
+source_group(OpenVR\\Custom REGULAR_EXPRESSION ${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/custom_interfaces/*)
+source_group(Interfaces REGULAR_EXPRESSION ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/Base*)
+source_group(Interfaces\\Declarations REGULAR_EXPRESSION ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl/CVR*)
 
 # === OCOVR ===
 if (WIN32)
@@ -400,9 +396,9 @@ else ()
 	set(OCOVR_PLAT_SRC linux.cpp)
 endif ()
 set(OCOVR_SRC_ALL
-	OCOVR/${OCOVR_PLAT_SRC}
-	OCOVR/openvr_api.cpp
-	OCOVR/openvr_api_0_9_12.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OCOVR/${OCOVR_PLAT_SRC}
+	${CMAKE_CURRENT_LIST_DIR}/OCOVR/openvr_api.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OCOVR/openvr_api_0_9_12.cpp
 
 	# Resources don't get nicely included in a library file
 	${OVR_RESOURCES}
@@ -450,7 +446,7 @@ else ()
 endif ()
 
 # needed for generated files
-target_include_directories(OCOVR PRIVATE OpenOVR/Reimpl)
+target_include_directories(OCOVR PRIVATE ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl)
 
 # Required because the compositor header needs the platform-specific structures enabled via defines
 target_compile_definitions(OCOVR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
@@ -458,24 +454,24 @@ target_compile_definitions(OCOVR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 find_package(Python REQUIRED Interpreter)
 
 # glob for all openvr headers
-file(GLOB openvr-headers CONFIGURE_DEPENDS LIST_DIRECTORIES false ${CMAKE_SOURCE_DIR}/OpenVRHeaders/openvr-*)
+file(GLOB openvr-headers CONFIGURE_DEPENDS LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders/openvr-*)
 
 # glob for stub generator libraries
-file(GLOB stub-deps CONFIGURE_DEPENDS LIST_DIRECTORIES false ${CMAKE_SOURCE_DIR}/scripts/stubs/*)
+file(GLOB stub-deps CONFIGURE_DEPENDS LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/scripts/stubs/*)
 
 # Command for running header splitting script
 add_custom_command(
 	OUTPUT ${GENERATED_DIR}/interfaces/vrtypes.h
-	COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/split_headers.py ${CMAKE_SOURCE_DIR}/OpenVRHeaders ${GENERATED_DIR}
-	DEPENDS ${CMAKE_SOURCE_DIR}/scripts/split_headers.py ${openvr-headers}
+	COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/split_headers.py ${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders ${GENERATED_DIR}
+	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/scripts/split_headers.py ${openvr-headers}
 	COMMENT "Splitting headers..."
 	)
 
 # Command for running stub generator
 add_custom_command(
 	OUTPUT ${GENERATED_DIR}/stubs.gen.cpp ${GENERATED_DIR}/static_bases.gen.h
-	COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/stubs.py ${CMAKE_SOURCE_DIR}/OpenOVR/Reimpl ${CMAKE_SOURCE_DIR}/OpenVRHeaders ${GENERATED_DIR}
-	DEPENDS ${CMAKE_SOURCE_DIR}/scripts/stubs.py ${stub-deps} ${GENERATED_DIR}/interfaces/vrtypes.h
+	COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scripts/stubs.py ${CMAKE_CURRENT_LIST_DIR}/OpenOVR/Reimpl ${CMAKE_CURRENT_LIST_DIR}/OpenVRHeaders ${GENERATED_DIR}
+	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/scripts/stubs.py ${stub-deps} ${GENERATED_DIR}/interfaces/vrtypes.h
 	COMMENT "Generating stubs..."
 	)
 
