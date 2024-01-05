@@ -156,6 +156,9 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 		extensions.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
 		apiFlags |= XR_SUPPORTED_GRAPHICS_API_VK;
 	}
+	if (availableExtensions.count(XR_FB_COMPOSITION_LAYER_IMAGE_LAYOUT_EXTENSION_NAME)) {
+		extensions.push_back(XR_FB_COMPOSITION_LAYER_IMAGE_LAYOUT_EXTENSION_NAME);
+	}
 #endif
 #if defined(SUPPORT_GL)
 	if (availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)) {

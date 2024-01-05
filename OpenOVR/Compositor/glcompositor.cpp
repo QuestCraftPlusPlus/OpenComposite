@@ -22,7 +22,7 @@
 #ifdef _WIN32
 typedef void(APIENTRY* PFNGLGETTEXTURELEVELPARAMETERIVPROC)(GLuint texture, GLint level, GLenum pname, GLint* params);
 typedef void(APIENTRY* PFNGLCOPYIMAGESUBDATAPROC)(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ,
-    GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
+    GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLuint srcWidth, GLuint srcHeight, GLuint srcDepth);
 #endif
 
 static PFNGLGETTEXTURELEVELPARAMETERIVPROC glGetTextureLevelParameteriv = nullptr;
@@ -181,7 +181,7 @@ void GLBaseCompositor::InvokeCubemap(const vr::Texture_t* textures)
 	OOVR_ABORT("GLCompositor::InvokeCubemap: Not yet supported!");
 }
 
-void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpace c_space, GLsizei rawformat)
+void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpace c_space, GLuint rawformat)
 {
 	// See the comment for NormaliseFormat as to why we're doing this
 	GLuint format = NormaliseFormat(c_space, rawformat);
@@ -232,7 +232,7 @@ void GLBaseCompositor::CheckCreateSwapChain(int width, int height, vr::EColorSpa
 	ReadSwapchainImages();
 }
 
-GLuint GLBaseCompositor::NormaliseFormat(vr::EColorSpace c_space, GLsizei rawFormat)
+GLuint GLBaseCompositor::NormaliseFormat(vr::EColorSpace c_space, GLuint rawFormat)
 {
 	switch (rawFormat) {
 	case GL_RGBA:
