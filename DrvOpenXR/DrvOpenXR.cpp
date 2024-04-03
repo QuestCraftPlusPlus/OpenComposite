@@ -175,6 +175,8 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 #if defined(ANDROID)
 	if (availableExtensions.count(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME))
 		extensions.push_back(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME);
+	if (availableExtensions.count(XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME))
+	    extensions.push_back(XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME);
 #endif
 	if(availableExtensions.count(XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME))
 		hasPerfExt = true;

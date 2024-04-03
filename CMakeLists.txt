@@ -158,7 +158,7 @@ if (NOT OpenXR_FOUND)
 	target_link_libraries(OpenXR PUBLIC Vulkan)
 
 	if (ANDROID)
-		target_compile_definitions(OpenXR PUBLIC -DXR_USE_PLATFORM_ANDROID -DXR_USE_GRAPHICS_API_OPENGL_ES)
+		target_compile_definitions(OpenXR PUBLIC -DXR_USE_PLATFORM_ANDROID -DXR_USE_GRAPHICS_API_OPENGL_ES -DXR_EXTENSION_PROTOTYPES)
 	endif()
 	set(XrLib OpenXR)
 endif()

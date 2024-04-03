@@ -343,6 +343,21 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingOpenGLESAndroidKHR>>(binding);
 			DrvOpenXR::SetupSession();
 
+			PFN_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB_p;
+			PFN_xrEnumerateDisplayRefreshRatesFB xrEnumerateDisplayRefreshRatesFB_p;
+			xrGetInstanceProcAddr(xr_instance, "xrRequestDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrRequestDisplayRefreshRateFB_p));
+			xrGetInstanceProcAddr(xr_instance, "xrEnumerateDisplayRefreshRatesFB", (PFN_xrVoidFunction*)(&xrEnumerateDisplayRefreshRatesFB_p));
+
+
+			uint32_t refreshRateCount = 0;
+			xrEnumerateDisplayRefreshRatesFB_p(xr_session.get(), 0, &refreshRateCount, nullptr);
+
+			std::vector<float> refreshRates(refreshRateCount);
+			OOVR_FAILED_XR_ABORT(xrEnumerateDisplayRefreshRatesFB_p(xr_session.get(), refreshRateCount, &refreshRateCount, refreshRates.data()));
+
+			auto maxRefreshRate = *std::max_element(refreshRates.begin(), refreshRates.end());
+			OOVR_FAILED_XR_ABORT(xrRequestDisplayRefreshRateFB_p(xr_session.get(), maxRefreshRate));
+
 #else
 			OOVR_ABORT("Application is trying to submit an OpenGL texture, which OpenComposite supports but is disabled in this build");
 #endif
