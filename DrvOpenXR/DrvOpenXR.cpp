@@ -291,8 +291,8 @@ void DrvOpenXR::SetupSession()
 	if(currentBackend->hasPerfExt) {
 		PFN_xrPerfSettingsSetPerformanceLevelEXT xrPerfSettingsSetPerformanceLevelEXT_p;
 		xrGetInstanceProcAddr(xr_instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&xrPerfSettingsSetPerformanceLevelEXT_p));
-		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_CPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT);
-		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_GPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT);
+		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_CPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT);
+		xrPerfSettingsSetPerformanceLevelEXT_p(xr_session.get(), XR_PERF_SETTINGS_DOMAIN_GPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT);
 	}
 
 	// Setup the OpenXR globals, which uses the current session so we have to do this last
