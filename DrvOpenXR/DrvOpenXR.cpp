@@ -5,10 +5,9 @@
 #include "DrvOpenXR.h"
 
 #include "../OpenOVR/Misc/Config.h"
-#include "../OpenOVR/Misc/android_api.h"
 #include "../OpenOVR/Misc/xr_ext.h"
 #include "../OpenOVR/Reimpl/BaseInput.h"
-#include "XrBackend.h"
+#include "environ.h"
 #include "generated/static_bases.gen.h"
 
 #include <thread>
@@ -102,6 +101,29 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	OOVR_LOGF("Set OpenXR validation file path: %s", XR_VALIDATION_FILE_NAME);
 #endif
 
+#if defined(ANDROID)
+	if (!pojav_environ->OpenComposite_Android_Create_Info) {
+		OOVR_ABORT("Cannot create OpenXR instance - OpenComposite_Android_Create_Info not set");
+	}
+	
+	JNIEnv* env;
+	((JavaVM*)pojav_environ->OpenComposite_Android_Create_Info->applicationVM)->AttachCurrentThread(&env, NULL);
+
+	PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
+    XrResult res;
+
+    res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR",
+                                (PFN_xrVoidFunction *) (&initializeLoader));
+
+	XrLoaderInitInfoAndroidKHR loaderInitInfoAndroidKhr = {
+            XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR,
+            nullptr,
+            pojav_environ->OpenComposite_Android_Create_Info->applicationVM,
+            pojav_environ->OpenComposite_Android_Create_Info->applicationActivity
+    };
+	initializeLoader((const XrLoaderInitInfoBaseHeaderKHR *) &loaderInitInfoAndroidKhr);
+#endif
+
 	// Enumerate the available extensions
 	uint32_t availableExtensionsCount;
 	OOVR_FAILED_XR_ABORT(xrEnumerateInstanceExtensionProperties(nullptr, 0, &availableExtensionsCount, nullptr));
@@ -133,7 +155,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	XrApplicationInfo appInfo{};
 	GetXRAppName(appInfo.applicationName);
 	appInfo.applicationVersion = 1;
-	appInfo.apiVersion = XR_CURRENT_API_VERSION;
+	appInfo.apiVersion = XR_MAKE_VERSION(1, 0, 0);
 
 	std::vector<const char*> extensions;
 	XrGraphicsApiSupportedFlags apiFlags = 0;
@@ -211,10 +233,7 @@ IBackend* DrvOpenXR::CreateOpenXRBackend()
 	createInfo.enabledApiLayerCount = (sizeof(layers) / sizeof(const char*)) - 1; // Subtract the dummy value
 
 #if ANDROID
-	if (!OpenComposite_Android_Create_Info) {
-		OOVR_ABORT("Cannot create OpenXR instance - OpenComposite_Android_Create_Info not set");
-	}
-	XrInstanceCreateInfoAndroidKHR androidInfo = *OpenComposite_Android_Create_Info;
+	XrInstanceCreateInfoAndroidKHR androidInfo = *pojav_environ->OpenComposite_Android_Create_Info;
 	androidInfo.next = nullptr;
 	createInfo.next = &androidInfo;
 #endif

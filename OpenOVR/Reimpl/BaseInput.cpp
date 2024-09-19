@@ -31,9 +31,6 @@ using namespace vr;
 
 #include "../DrvOpenXR/XrBackend.h"
 
-// On Android, the application must supply a function to load the contents of a file
-#include "Misc/android_api.h"
-
 /**
  * Macro for creating an Action object from a handle and verifying isn't invalid.
  * If it is invalid, it will cause the surrounding function to return VRInputError_InvalidHandle.
@@ -71,7 +68,6 @@ static bool ReadJson(const std::wstring& path, Json::Value& result)
 	const std::wstring& real_path = path;
 #endif
 
-#ifndef ANDROID
 	std::ifstream in(real_path, std::ios::binary);
 	if (in) {
 		std::stringstream contents;
@@ -82,12 +78,6 @@ static bool ReadJson(const std::wstring& path, Json::Value& result)
 		result = Json::Value(Json::ValueType::objectValue);
 		return false;
 	}
-#else
-	std::string contents = OpenComposite_Android_Load_Input_File(real_path.c_str());
-	Json::Reader reader;
-	reader.parse(contents, result, false);
-	return true;
-#endif
 }
 
 // Convert a UTF-8 string to a UTF-16 (wide) string

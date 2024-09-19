@@ -4,6 +4,7 @@
 
 #include "XrBackend.h"
 #include "generated/interfaces/vrtypes.h"
+#include "environ.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -15,11 +16,6 @@
 #endif
 
 #include <openxr/openxr_platform.h>
-
-// On Android, the app has to pass the OpenGLES setup data through
-#ifdef ANDROID
-#include "../OpenOVR/Misc/android_api.h"
-#endif
 
 // FIXME find a better way to send the OnPostFrame call?
 #include "../OpenOVR/Reimpl/BaseInput.h"
@@ -332,11 +328,11 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR };
 			OOVR_FAILED_XR_ABORT(xr_ext->xrGetOpenGLESGraphicsRequirementsKHR(xr_instance, xr_system, &graphicsRequirements));
 
-			if (!OpenComposite_Android_GLES_Binding_Info)
+			if (!pojav_environ->OpenComposite_Android_GLES_Binding_Info)
 				OOVR_ABORT("App is trying to use GLES, but OpenComposite_Android_GLES_Binding_Info global is not set.\n"
 				           "Please ensure this is set by the application.");
 
-			XrGraphicsBindingOpenGLESAndroidKHR binding = *OpenComposite_Android_GLES_Binding_Info;
+			XrGraphicsBindingOpenGLESAndroidKHR binding = *pojav_environ->OpenComposite_Android_GLES_Binding_Info;
 			OOVR_FALSE_ABORT(binding.type == XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR);
 			binding.next = nullptr;
 
